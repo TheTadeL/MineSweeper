@@ -9,6 +9,7 @@ import java.awt.*;
 public class Main extends JFrame {
     public static int WINDOW_WIDTH = 900;
     public static int WINDOW_HEIGHT = 600;
+    public static int BOMB_COUNT = 55;
     public static int hor = 20;
     public static int ver = 15;
     private JPanel mainPanel = new JPanel(new BorderLayout());

@@ -1,5 +1,5 @@
 package ch.gibb.minesweeper;
 
 public enum TileState {
-    DEFAULT, CLICKED, FLAGGED
+    DEFAULT, CLICKED, FLAGGED, EMPTY
 }

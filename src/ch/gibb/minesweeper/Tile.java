@@ -1,6 +1,7 @@
 package ch.gibb.minesweeper;
 
 import ch.gibb.minesweeper.panels.GamePanel;
+import com.sun.istack.internal.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,6 +10,11 @@ import java.util.List;
 
 
 public class Tile extends JButton {
+    public static Color COLOR_EMPTY_CLICKED = Color.LIGHT_GRAY;
+    public static Color COLOR_NUMBER_CLICKED = Color.WHITE;
+    public static Color COLOR_FLAGGED = Color.PINK;
+    public static Color COLOR_BOMB = Color.RED;
+
     private boolean isBomb;
     private int positionRow;
     private int positionCol;
@@ -18,46 +24,10 @@ public class Tile extends JButton {
         this.positionCol = positionCol;
     }
 
-    public void onClick(){
-//        int bombCount = 0;
-//        this.setState(TileState.CLICKED);
-//
-//        if(this.isBomb()){
-//            //GAME OVER
-//        }
-//        else {
-//            this.setBackground(Color.LIGHT_GRAY);
-//            bombCount = countBombs(this.getNeighbours());
-//            if(bombCount != 0) {
-//                this.setText(String.valueOf(bombCount));
-//            }
-//            else {
-//                for(Tile tile : this.getNeighbours()){
-//                    tile.onReveal();
-//                }
-//            }
-//        }
-    }
-
-    public void onReveal(){
-        int bombCount = 0;
-        if(this.isBomb()){
-
-        }
-        else {
-            bombCount = this.countBombs();
-            this.setBackground(Color.LIGHT_GRAY);
-            if(bombCount != 0) {
-                this.setText(String.valueOf(bombCount));
-            }
-            else {
-                for(Tile tile : this.getNeighbours()){
-
-                }
-            }
-        }
-    }
-
+    /**
+     * Listet alle benachbarten Felder auf, welche NICHT bereits aufgedeckt sind.
+     * @return - Liste der Nachbarsfelder
+     */
     public List<Tile> getNeighbours(){
         List<Tile> neighbours = new ArrayList<>();
 
@@ -72,14 +42,17 @@ public class Tile extends JButton {
                     tile.getPositionRow() == this.getPositionRow()+1 && tile.getPositionCol() == this.getPositionCol() ||
                     tile.getPositionRow() == this.getPositionRow()+1 && tile.getPositionCol() == this.getPositionCol()+1
             ){
-                if(tile.getState() == TileState.DEFAULT)
+                if(tile.getState() == TileState.DEFAULT || tile.getState() == TileState.FLAGGED)
                     neighbours.add(tile);
             }
         }
-
         return neighbours;
     }
 
+    /**
+     * Gibt die Anzahl der benachbarten Bomben zurück.
+     * @return - Anzahl Bomben
+     */
      public int countBombs(){
         List<Tile> tiles = this.getNeighbours();
         int bombCount = 0;
@@ -92,17 +65,37 @@ public class Tile extends JButton {
 
         if(bombCount != 0) {
             this.setText(String.valueOf(bombCount));
-            this.setBackground(Color.white);
-        } else {
-            this.setBackground(Color.lightGray);
-            this.setEnabled(false);
+            this.setState(TileState.CLICKED);
         }
-
+        else {
+            this.setState(TileState.EMPTY);
+        }
          return bombCount;
     }
 
     private TileState state = TileState.DEFAULT;
 
+    public void setState(TileState state) {
+        switch(state){
+            case CLICKED:
+                this.setBackground(Color.WHITE);
+                break;
+            case EMPTY:
+                this.setBackground(Color.LIGHT_GRAY);
+                this.setEnabled(false);
+                break;
+            case FLAGGED:
+                this.setBackground(Color.PINK);
+                break;
+            case DEFAULT:
+                this.setBackground(new JButton().getBackground());
+                break;
+                default:
+                    throw new IllegalArgumentException("Kein gültiger TileState mitgegeben!");
+        }
+
+        this.state = state;
+    }
     public boolean isBomb() {
         return isBomb;
     }
@@ -112,9 +105,6 @@ public class Tile extends JButton {
     }
     public TileState getState() {
         return state;
-    }
-    public void setState(TileState state) {
-        this.state = state;
     }
     public int getPositionRow() {
         return positionRow;

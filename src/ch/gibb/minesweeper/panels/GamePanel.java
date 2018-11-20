@@ -1,9 +1,9 @@
 package ch.gibb.minesweeper.panels;
 
+import ch.gibb.minesweeper.Main;
 import ch.gibb.minesweeper.Tile;
 import ch.gibb.minesweeper.TileState;
 
-import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Random;
 
 public class GamePanel extends DefaultPanel implements MouseListener {
-    public static List<Tile> tiles = new ArrayList<Tile>();
+    public static List<Tile> tiles = new ArrayList<>();
     private int rowCnt;
     private int colCnt;
     private Random random = new Random();
@@ -23,6 +23,11 @@ public class GamePanel extends DefaultPanel implements MouseListener {
         setBorder(new EmptyBorder(20,20,20,20));
     }
 
+    /**
+     * Das Spielfeld aufbauen. Die Felder werden erstellt und auf das Spielfeld ausgelegt.
+     * @param colCnt - Anzahl Spalten
+     * @param rowCnt - Anzahl Zeilen
+     */
     public void setupGame(int colCnt, int rowCnt) {
         this.colCnt = colCnt;
         this.rowCnt = rowCnt;
@@ -37,9 +42,13 @@ public class GamePanel extends DefaultPanel implements MouseListener {
                 tiles.add(tile);
             }
         }
-        setBombs(55);
+        setBombs(Main.BOMB_COUNT);
     }
 
+    /**
+     * Bomben werden zufällig auf das Spielfeld aufgeteilt.
+     * @param bombCnt - Anzahl zu setzende Bomben.
+     */
     private void setBombs(int bombCnt){
         int bombsInGame = 0;
 
@@ -57,29 +66,25 @@ public class GamePanel extends DefaultPanel implements MouseListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        for(int i = 0; i < tiles.size(); i++){
-            if(e.getSource() == tiles.get(i)){
+        for(Tile tile : tiles){
+            if(e.getSource() == tile){
+                //Das geklickte Feld in einer Variable abspeichern.
                 Tile clickedTile = (Tile)e.getSource();
-                //
-                if (e.getButton() == MouseEvent.BUTTON1 && clickedTile.getState() != TileState.CLICKED) {
-                    clickedTile.setState(TileState.CLICKED);
-                    //clickedTile.onClick();
+
+                //Wenn Linksklick:
+                if (e.getButton() == MouseEvent.BUTTON1 && clickedTile.getState() != TileState.CLICKED && clickedTile.getState() != TileState.EMPTY) {
+                    //Bomben um das Feld werden gezählt. Wenn es 0 Bomben sind werden die benachbarten Felder überprüft.
                     if(clickedTile.countBombs() == 0){
                         revealOpenTiles(clickedTile);
                     }
-
-                    // TEST
-                    System.out.println(clickedTile.isBomb() +
-                                "[" + clickedTile.getPositionRow() + "]" +
-                                "[" + clickedTile.getPositionCol() + "]");
-                        //
                 }
-                if (e.getButton() == MouseEvent.BUTTON3 && clickedTile.getState() != TileState.CLICKED) {
-                    if(clickedTile.getBackground() != Color.PINK){
-                        clickedTile.setBackground(Color.PINK);
+                //Wenn Rechtsklick:
+                else if (e.getButton() == MouseEvent.BUTTON3 && clickedTile.getState() != TileState.CLICKED && clickedTile.getState() != TileState.EMPTY) {
+                    if(clickedTile.getState() != TileState.FLAGGED){
+                        clickedTile.setState(TileState.FLAGGED);
                     }
                     else {
-                        clickedTile.setBackground(new JButton().getBackground());
+                        clickedTile.setState(TileState.DEFAULT);
                     }
                 }
             }
@@ -102,38 +107,23 @@ public class GamePanel extends DefaultPanel implements MouseListener {
 
     }
 
-    private int checkBombs(int startRow, int startCol){
-        int bombsFound = 0;
-
-        int row = startRow-1;
-        int col = startCol-1;
-
-        for (int i = 0; i < 9; i++){
-            //StartTile überspringen
-            if(!(row == startRow && col == startRow)) {
-
-            }
-            col++;
-            if (col > startCol + 1) {
-                col = startCol - 1;
-                row += 1;
-            }
-        }
-
-        return bombsFound;
-    }
-
+    /**
+     * Felder werden nacheinander überprüft und es wird geschaut ob benachbarte Bomben existieren. Wenn ein Feld
+     * keine benachbarte Bomben hat, wird dieses auch aufgedeckt und es wird nochmal nach benachbarten Bomben gesucht,
+     * bis keine benachbarten Felder 0 benachbarte Bomben mehr haben.
+     * @param startTile - bei diesem Feld startet die Überprüfung.
+     */
     private void revealOpenTiles(Tile startTile){
+        //Liste mit Feldern die überprüft werden müssen.
         List<Tile> tilesToCheck = new ArrayList<>();
         tilesToCheck.add(startTile);
 
+        //Alle Felder in der Liste überprüfen.
         while (tilesToCheck.size() > 0){
-            tilesToCheck.get(0).setState(TileState.CLICKED);
             for(Tile tile : tilesToCheck.get(0).getNeighbours()){
-                if(tile.countBombs() == 0 && tile.getState() != TileState.CLICKED){
+                if(tile.countBombs() == 0 ){
                     tilesToCheck.add(tile);
                 }
-                tile.setState(TileState.CLICKED);
             }
             tilesToCheck.remove(0);
         }
