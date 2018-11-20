@@ -78,14 +78,18 @@ public class Tile extends JButton {
     public void setState(TileState state) {
         switch(state){
             case CLICKED:
-                this.setBackground(Color.WHITE);
+                this.setBackground(COLOR_NUMBER_CLICKED);
                 break;
             case EMPTY:
-                this.setBackground(Color.LIGHT_GRAY);
+                this.setBackground(COLOR_EMPTY_CLICKED);
                 this.setEnabled(false);
                 break;
             case FLAGGED:
-                this.setBackground(Color.PINK);
+                this.setBackground(COLOR_FLAGGED);
+                break;
+            case BLOWN:
+                this.setText("X");
+                this.setBackground(COLOR_BOMB);
                 break;
             case DEFAULT:
                 this.setBackground(new JButton().getBackground());
@@ -93,14 +97,12 @@ public class Tile extends JButton {
                 default:
                     throw new IllegalArgumentException("Kein gültiger TileState mitgegeben!");
         }
-
         this.state = state;
     }
     public boolean isBomb() {
         return isBomb;
     }
     public void setBomb(boolean bomb) {
-        setText("B");
         isBomb = bomb;
     }
     public TileState getState() {
