@@ -1,47 +1,49 @@
 package ch.gibb.minesweeper;
 
+import ch.gibb.minesweeper.helpers.Position;
 import ch.gibb.minesweeper.panels.GamePanel;
-import com.sun.istack.internal.Nullable;
-
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * Tiles sind die einzelnen Felder auf einem GamePanel.
+ */
 public class Tile extends JButton {
-    public static Color COLOR_EMPTY_CLICKED = Color.LIGHT_GRAY;
-    public static Color COLOR_NUMBER_CLICKED = Color.WHITE;
-    public static Color COLOR_FLAGGED = Color.PINK;
-    public static Color COLOR_BOMB = Color.RED;
+    private static Color COLOR_EMPTY_CLICKED = Color.LIGHT_GRAY;
+    private static Color COLOR_NUMBER_CLICKED = Color.WHITE;
+    private static Color COLOR_FLAGGED = Color.PINK;
+    private static Color COLOR_BOMB = Color.RED;
 
+    private TileState state = TileState.DEFAULT;
     private boolean isBomb;
-    private int positionRow;
-    private int positionCol;
+    private Position position;
 
-    public Tile(int positionRow, int positionCol){
-        this.positionRow = positionRow;
-        this.positionCol = positionCol;
+    public Tile(Position position){
+        this.position = position;
     }
 
     /**
-     * Listet alle benachbarten Felder auf, welche NICHT bereits aufgedeckt sind.
-     * @return - Liste der Nachbarsfelder
+     * Gibt alle benachbarten Tiles zurück
+     * @param gamePanel => GamePanel, in welchem sich das Tile befindet
+     * @return => benachbarte Tiles : List<Tile>
      */
-    public List<Tile> getNeighbours(){
+    public List<Tile> getNeighbours(GamePanel gamePanel){
         List<Tile> neighbours = new ArrayList<>();
 
-        for(Tile tile : GamePanel.tiles){
+        for(Tile tile : gamePanel.getTiles()){
             if(
-                    tile.getPositionRow() == this.getPositionRow()-1 && tile.getPositionCol() == this.getPositionCol()-1 ||
-                    tile.getPositionRow() == this.getPositionRow()-1 && tile.getPositionCol() == this.getPositionCol() ||
-                    tile.getPositionRow() == this.getPositionRow()-1 && tile.getPositionCol() == this.getPositionCol()+1 ||
-                    tile.getPositionRow() == this.getPositionRow() && tile.getPositionCol() == this.getPositionCol()-1 ||
-                    tile.getPositionRow() == this.getPositionRow() && tile.getPositionCol() == this.getPositionCol()+1 ||
-                    tile.getPositionRow() == this.getPositionRow()+1 && tile.getPositionCol() == this.getPositionCol()-1 ||
-                    tile.getPositionRow() == this.getPositionRow()+1 && tile.getPositionCol() == this.getPositionCol() ||
-                    tile.getPositionRow() == this.getPositionRow()+1 && tile.getPositionCol() == this.getPositionCol()+1
+                    tile.getPosition().getRow() == this.getPosition().getRow()-1 && tile.getPosition().getColumn() == this.getPosition().getColumn()-1 ||
+                    tile.getPosition().getRow() == this.getPosition().getRow()-1 && tile.getPosition().getColumn() == this.getPosition().getColumn() ||
+                    tile.getPosition().getRow() == this.getPosition().getRow()-1 && tile.getPosition().getColumn() == this.getPosition().getColumn()+1 ||
+                    tile.getPosition().getRow() == this.getPosition().getRow() && tile.getPosition().getColumn() == this.getPosition().getColumn()-1 ||
+                    tile.getPosition().getRow() == this.getPosition().getRow() && tile.getPosition().getColumn() == this.getPosition().getColumn()+1 ||
+                    tile.getPosition().getRow() == this.getPosition().getRow()+1 && tile.getPosition().getColumn() == this.getPosition().getColumn()-1 ||
+                    tile.getPosition().getRow() == this.getPosition().getRow()+1 && tile.getPosition().getColumn() == this.getPosition().getColumn() ||
+                    tile.getPosition().getRow() == this.getPosition().getRow()+1 && tile.getPosition().getColumn() == this.getPosition().getColumn()+1
             ){
+                //Nur Felder zu den Nachbaren hinzufügen, welche noch nicht aufgedekt wurden.
                 if(tile.getState() == TileState.DEFAULT || tile.getState() == TileState.FLAGGED)
                     neighbours.add(tile);
             }
@@ -51,13 +53,14 @@ public class Tile extends JButton {
 
     /**
      * Gibt die Anzahl der benachbarten Bomben zurück.
-     * @return - Anzahl Bomben
+     * @param gamePanel => GamePanel, in welchem sich das Tile befindet
+     * @return anzahl Bomben : integer
      */
-     public int countBombs(){
-        List<Tile> tiles = this.getNeighbours();
+     public int countAdjacentBombs(GamePanel gamePanel){
+        List<Tile> neighbours = this.getNeighbours(gamePanel);
         int bombCount = 0;
 
-        for (Tile tile: tiles) {
+        for (Tile tile: neighbours) {
             if(tile.isBomb()){
                 bombCount++;
             }
@@ -73,8 +76,11 @@ public class Tile extends JButton {
          return bombCount;
     }
 
-    private TileState state = TileState.DEFAULT;
 
+    /**
+     * Wechselt die State des Tiles und passt das Tile automatisch an.
+     * @param state => TileState, welche von dem Tile angenommen werden soll
+     */
     public void setState(TileState state) {
         switch(state){
             case CLICKED:
@@ -108,16 +114,7 @@ public class Tile extends JButton {
     public TileState getState() {
         return state;
     }
-    public int getPositionRow() {
-        return positionRow;
-    }
-    public void setPositionRow(int positionRow) {
-        this.positionRow = positionRow;
-    }
-    public int getPositionCol() {
-        return positionCol;
-    }
-    public void setPositionCol(int positionCol) {
-        this.positionCol = positionCol;
+    public Position getPosition() {
+        return position;
     }
 }

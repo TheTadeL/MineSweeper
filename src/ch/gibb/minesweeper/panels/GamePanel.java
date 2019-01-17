@@ -3,24 +3,31 @@ package ch.gibb.minesweeper.panels;
 import ch.gibb.minesweeper.Main;
 import ch.gibb.minesweeper.Tile;
 import ch.gibb.minesweeper.TileState;
+import ch.gibb.minesweeper.helpers.Position;
 
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Die Spiellogik findet in dieser Klasse statt.
+ */
 public class GamePanel extends DefaultPanel implements MouseListener {
-    public static List<Tile> tiles = new ArrayList<>();
+    private List<Tile> tiles = new ArrayList<>();
     private int rowCnt;
     private int colCnt;
     private Random random = new Random();
     private boolean gameOver = false;
+    private int bombCount;
 
-    public GamePanel(int height, Color background){
-        super(height, background);
+    public GamePanel(int width, int height, Color background){
+        super(width, height, background);
         setBorder(new EmptyBorder(20,20,20,20));
     }
 
@@ -29,22 +36,27 @@ public class GamePanel extends DefaultPanel implements MouseListener {
      * @param colCnt - Anzahl Spalten
      * @param rowCnt - Anzahl Zeilen
      */
-    public void setupGame(int colCnt, int rowCnt) {
+    public void setupGame(int colCnt, int rowCnt, int bombCount) {
         this.colCnt = colCnt;
         this.rowCnt = rowCnt;
+        this.bombCount = bombCount;
+        removeAll();
+        tiles.clear();
 
         setLayout(new GridLayout(rowCnt, colCnt));
         for(int i = 0; i < rowCnt; i++){
             for(int j = 0; j < colCnt; j++){
-                Tile tile = new Tile(i, j);
+                Tile tile = new Tile(new Position(i, j));
                 tile.setPreferredSize(new Dimension(2,2));
                 tile.addMouseListener(this);
                 add(tile);
                 tiles.add(tile);
             }
         }
-        setBombs(Main.BOMB_COUNT);
+        setBombs(this.bombCount);
+        this.gameOver = false;
     }
+
 
     /**
      * Bomben werden zufällig auf das Spielfeld aufgeteilt.
@@ -57,7 +69,7 @@ public class GamePanel extends DefaultPanel implements MouseListener {
             int randomNumHor = random.nextInt(colCnt);
             int randomNumVer = random.nextInt(rowCnt);
             for (Tile tile : tiles) {
-                if(tile.getPositionRow() == randomNumVer && tile.getPositionCol() == randomNumHor){
+                if(tile.getPosition().equals(new Position(randomNumVer, randomNumHor))){
                     tile.setBomb(true);
                     tile.setText("B");
                     bombsInGame++;
@@ -68,41 +80,47 @@ public class GamePanel extends DefaultPanel implements MouseListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        //Klicks auf dem Spielfeld nur überprüfen, wenn das Spiel noch nicht zu ende ist.
-        if(!gameOver){
-            for(Tile tile : tiles) {
-                if (e.getSource() == tile) {
-                    //Das geklickte Feld in einer Variable abspeichern.
-                    Tile clickedTile = (Tile) e.getSource();
 
-                    //Wenn Linksklick:
-                    if (e.getButton() == MouseEvent.BUTTON1 && clickedTile.getState() != TileState.CLICKED && clickedTile.getState() != TileState.EMPTY) {
-                        if (clickedTile.isBomb()) {
-                            gameOver = true;
-                            blowBombs();
-                        } else {
-                            //Bomben um das Feld werden gezählt. Wenn es 0 Bomben sind werden die benachbarten Felder überprüft.
-                            if (clickedTile.countBombs() == 0) {
-                                revealOpenTiles(clickedTile);
-                            }
-                        }
-                    }
-                    //Wenn Rechtsklick:
-                    else if (e.getButton() == MouseEvent.BUTTON3 && clickedTile.getState() != TileState.CLICKED && clickedTile.getState() != TileState.EMPTY) {
-                        if (clickedTile.getState() != TileState.FLAGGED) {
-                            clickedTile.setState(TileState.FLAGGED);
-                        } else {
-                            clickedTile.setState(TileState.DEFAULT);
-                        }
-                    }
-                }
-            }
-            checkGame();
-        }
     }
     @Override
     public void mousePressed(MouseEvent e) {
+        try {//Klicks auf dem Spielfeld nur überprüfen, wenn das Spiel noch nicht zu ende ist.
+            if (!gameOver) {
+                for (Tile tile : tiles) {
+                    if (e.getSource() == tile) {
+                        //Das geklickte Feld in einer Variable abspeichern.
+                        Tile clickedTile = (Tile) e.getSource();
 
+                        //Wenn Linksklick:
+                        if (e.getButton() == MouseEvent.BUTTON1 && clickedTile.getState() != TileState.CLICKED && clickedTile.getState() != TileState.EMPTY) {
+                            if (clickedTile.isBomb()) {
+                                gameOver = true;
+                                blowBombs();
+                                showGameOverWindow();
+                            } else {
+                                //Bomben um das Feld werden gezählt. Wenn es 0 Bomben sind werden die benachbarten Felder überprüft.
+                                if (clickedTile.countAdjacentBombs(this) == 0) {
+                                    revealOpenTiles(clickedTile);
+                                }
+                            }
+                        }
+                        //Wenn Rechtsklick:
+                        else if (e.getButton() == MouseEvent.BUTTON3 && clickedTile.getState() != TileState.CLICKED && clickedTile.getState() != TileState.EMPTY) {
+                            if (clickedTile.getState() != TileState.FLAGGED) {
+                                clickedTile.setState(TileState.FLAGGED);
+                            } else {
+                                clickedTile.setState(TileState.DEFAULT);
+                            }
+                        }
+                    }
+                }
+                checkGame();
+            }
+
+        }
+        catch (ConcurrentModificationException exeption) {
+            System.out.println(e.toString());
+        }
     }
     @Override
     public void mouseReleased(MouseEvent e) {
@@ -131,8 +149,8 @@ public class GamePanel extends DefaultPanel implements MouseListener {
 
         //Alle Felder in der Liste überprüfen.
         while (tilesToCheck.size() > 0){
-            for(Tile tile : tilesToCheck.get(0).getNeighbours()){
-                if(tile.countBombs() == 0 ){
+            for(Tile tile : tilesToCheck.get(0).getNeighbours(this)){
+                if(tile.countAdjacentBombs(this) == 0 ){
                     tilesToCheck.add(tile);
                 }
             }
@@ -151,7 +169,10 @@ public class GamePanel extends DefaultPanel implements MouseListener {
         }
     }
 
-    //TODO: diese Funktion nur ein Test
+    /**
+     * Prüft wieviele Felder bereits aufgedekt sind.
+     * Wenn alle Felder aufgedeckt sind, ist das Spiel zu ende
+     */
     private void checkGame(){
         int unopenedTiles = 0;
         for(Tile tile : tiles){
@@ -159,6 +180,8 @@ public class GamePanel extends DefaultPanel implements MouseListener {
                 unopenedTiles++;
             }
         }
+        // Wenn alle Tiles, welche keine Bomben sind, geöffnet wurden, ohne ein GameOver auszulösen,
+        // werden alle Bomben aufgedekt und das Spiel ist gewonnen
         if(unopenedTiles == 0){
             for(Tile tile : tiles){
                 if(tile.isBomb()) {
@@ -166,6 +189,50 @@ public class GamePanel extends DefaultPanel implements MouseListener {
                     tile.setText("O");
                 }
             }
+            gameOver = true;
+            showGameWonWindow();
         }
+    }
+
+    private void showGameOverWindow(){
+        //Custom button text
+        String[] options = {"Yes", "No"};
+        int answer = JOptionPane.showOptionDialog(this,
+                "You lost! Try again?",
+                "GAME OVER",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,     //do not use a custom Icon
+                options,  //the titles of buttons
+                options[0]); //default button title
+
+        if (answer == JOptionPane.YES_OPTION) {
+            setupGame(colCnt, rowCnt, bombCount);
+        } else if (answer == JOptionPane.NO_OPTION) {
+            System.exit(1);
+        }
+    }
+
+    private void showGameWonWindow(){
+        //Custom button text
+        String[] options = {"Yes", "No"};
+        int answer = JOptionPane.showOptionDialog(this,
+                "You Won!! Want to play again?",
+                "WINNER, WINNER, CHICKEN DINNER",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,     //do not use a custom Icon
+                options,  //the titles of buttons
+                options[0]); //default button title
+
+        if (answer == JOptionPane.YES_OPTION) {
+            setupGame(colCnt, rowCnt, bombCount);
+        } else if (answer == JOptionPane.NO_OPTION) {
+            System.exit(1);
+        }
+    }
+
+    public List<Tile> getTiles(){
+        return tiles;
     }
 }

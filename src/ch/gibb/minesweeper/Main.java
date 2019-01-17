@@ -7,26 +7,26 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Main extends JFrame {
-    public static int WINDOW_WIDTH = 900;
-    public static int WINDOW_HEIGHT = 600;
-    public static int BOMB_COUNT = 55;
-    public static int hor = 20;
-    public static int ver = 15;
-    private JPanel mainPanel = new JPanel(new BorderLayout());
+    private final static int BOMB_COUNT = 60;
+    private final static int WINDOW_WIDTH = 900;
+    private final static int WINDOW_HEIGHT = 600;
+    private final static int HOR = 20;
+    private final static int VER = 15;
 
     public static void main(String[] args){
         new Main();
     }
 
     private Main(){
+        JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
         mainPanel.setVisible(true);
 
-        InfoPanel infoPanel = new InfoPanel(50, Color.BLACK);
+        InfoPanel infoPanel = new InfoPanel(WINDOW_WIDTH,50, Color.BLACK);
         mainPanel.add(infoPanel, BorderLayout.NORTH);
 
-        GamePanel gamePanel = new GamePanel(550, Color.LIGHT_GRAY);
-        gamePanel.setupGame(hor, ver);
+        GamePanel gamePanel = new GamePanel(WINDOW_WIDTH, 550, Color.LIGHT_GRAY);
+        gamePanel.setupGame(HOR, VER, BOMB_COUNT);
         mainPanel.add(gamePanel, BorderLayout.SOUTH);
 
         this.add(mainPanel);

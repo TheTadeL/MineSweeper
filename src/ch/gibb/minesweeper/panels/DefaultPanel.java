@@ -6,8 +6,8 @@ import javax.swing.*;
 import java.awt.*;
 
 class DefaultPanel extends JPanel {
-    DefaultPanel(int height, Color background){
+    DefaultPanel(int width, int height, Color background){
         setBackground(background);
-        setPreferredSize(new Dimension(Main.WINDOW_WIDTH, height));
+        setPreferredSize(new Dimension(width, height));
     }
 }
