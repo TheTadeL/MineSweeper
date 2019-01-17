@@ -118,7 +118,8 @@ public class GamePanel extends DefaultPanel implements MouseListener {
 
         }
         catch (ConcurrentModificationException exeption) {
-            System.out.println(e.toString());
+            //Try / Catch um den ersten Klick zu umgehen welcher sich nur auf das JOptionPane bezieht.
+            System.out.println("Game restarted");
         }
     }
     @Override
