@@ -1,6 +1,5 @@
 package ch.gibb.minesweeper.panels;
 
-import ch.gibb.minesweeper.Main;
 import ch.gibb.minesweeper.Tile;
 import ch.gibb.minesweeper.TileState;
 import ch.gibb.minesweeper.helpers.Position;

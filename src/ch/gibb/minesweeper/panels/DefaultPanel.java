@@ -1,7 +1,5 @@
 package ch.gibb.minesweeper.panels;
 
-import ch.gibb.minesweeper.Main;
-
 import javax.swing.*;
 import java.awt.*;
 
