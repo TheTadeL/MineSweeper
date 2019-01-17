@@ -70,7 +70,7 @@ public class GamePanel extends DefaultPanel implements MouseListener {
             for (Tile tile : tiles) {
                 if(tile.getPosition().equals(new Position(randomNumVer, randomNumHor))){
                     tile.setBomb(true);
-                    tile.setText("B");
+                    tile.setText(" ");
                     bombsInGame++;
                 }
             }
